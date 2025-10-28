@@ -4,10 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ISOFlex Manufacturing Hub</title>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/react-router-dom@6.20.0/dist/umd/react-router-dom.production.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -74,15 +73,6 @@
 
         .float-animation {
             animation: float 6s ease-in-out infinite;
-        }
-
-        @keyframes pulse-glow {
-            0%, 100% { opacity: 1; box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
-            50% { opacity: 0.8; box-shadow: 0 0 40px rgba(59, 130, 246, 0.8); }
-        }
-
-        .pulse-glow {
-            animation: pulse-glow 2s ease-in-out infinite;
         }
 
         .status-indicator {
@@ -156,22 +146,15 @@
         .metric-card:hover::before {
             left: 100%;
         }
-
-        .scroll-smooth {
-            scroll-behavior: smooth;
-        }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
-        const { BrowserRouter, Routes, Route, Link, useNavigate, useLocation } = window.ReactRouterDOM;
+        const { useState, useEffect } = React;
 
-        // ============================================
-        // ICONS (SVG Components)
-        // ============================================
+        // Icons
         const DashboardIcon = () => (
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 13a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1v-7z" />
@@ -181,6 +164,12 @@
         const NCMIcon = () => (
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+        );
+
+        const CubeIcon = () => (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
         );
 
@@ -208,49 +197,35 @@
             </svg>
         );
 
-        const CubeIcon = () => (
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-            </svg>
-        );
-
-        // ============================================
-        // NAVIGATION COMPONENT
-        // ============================================
-        function Navigation() {
-            const location = useLocation();
+        // Navigation Component
+        function Navigation({ currentPage, onNavigate }) {
             const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-            const isActive = (path) => location.pathname === path;
-
             const navItems = [
-                { path: '/', label: 'Dashboard', icon: <DashboardIcon /> },
-                { path: '/ncm', label: 'NCM Analytics', icon: <NCMIcon /> },
-                { path: '/coa', label: 'Certificates', icon: <CoAIcon /> },
-                { path: '/silo', label: 'Silo Levels', icon: <SiloIcon /> },
-                { path: '/shipping', label: 'Shipping', icon: <ShipIcon /> },
-                { path: '/analytics', label: 'Analytics', icon: <AnalyticsIcon /> },
+                { id: 'dashboard', label: 'Dashboard', icon: <DashboardIcon /> },
+                { id: 'ncm', label: 'NCM Analytics', icon: <NCMIcon /> },
             ];
 
             return (
                 <nav className="glass sticky top-0 z-50 border-b border-slate-700/50">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex items-center justify-between h-16">
-                            {/* Logo */}
-                            <Link to="/" className="flex items-center space-x-3">
+                            <div 
+                                onClick={() => onNavigate('dashboard')}
+                                className="flex items-center space-x-3 cursor-pointer"
+                            >
                                 <CubeIcon />
                                 <span className="text-2xl font-bold gradient-text">ISOFlex</span>
                                 <div className="status-indicator"></div>
-                            </Link>
+                            </div>
 
-                            {/* Desktop Navigation */}
                             <div className="hidden md:flex items-center space-x-1">
                                 {navItems.map((item) => (
-                                    <Link
-                                        key={item.path}
-                                        to={item.path}
+                                    <button
+                                        key={item.id}
+                                        onClick={() => onNavigate(item.id)}
                                         className={`nav-link px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                            isActive(item.path)
+                                            currentPage === item.id
                                                 ? 'text-blue-400 bg-blue-500/10 active'
                                                 : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
                                         }`}
@@ -259,11 +234,10 @@
                                             {item.icon}
                                             <span>{item.label}</span>
                                         </div>
-                                    </Link>
+                                    </button>
                                 ))}
                             </div>
 
-                            {/* Mobile menu button */}
                             <button
                                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                                 className="md:hidden p-2 rounded-lg text-slate-300 hover:bg-slate-700/50"
@@ -275,17 +249,18 @@
                         </div>
                     </div>
 
-                    {/* Mobile Navigation */}
                     {mobileMenuOpen && (
                         <div className="md:hidden border-t border-slate-700/50">
                             <div className="px-2 pt-2 pb-3 space-y-1">
                                 {navItems.map((item) => (
-                                    <Link
-                                        key={item.path}
-                                        to={item.path}
-                                        onClick={() => setMobileMenuOpen(false)}
-                                        className={`block px-3 py-2 rounded-lg text-base font-medium ${
-                                            isActive(item.path)
+                                    <button
+                                        key={item.id}
+                                        onClick={() => {
+                                            onNavigate(item.id);
+                                            setMobileMenuOpen(false);
+                                        }}
+                                        className={`w-full text-left px-3 py-2 rounded-lg text-base font-medium ${
+                                            currentPage === item.id
                                                 ? 'text-blue-400 bg-blue-500/10'
                                                 : 'text-slate-300 hover:bg-slate-700/50'
                                         }`}
@@ -294,7 +269,7 @@
                                             {item.icon}
                                             <span>{item.label}</span>
                                         </div>
-                                    </Link>
+                                    </button>
                                 ))}
                             </div>
                         </div>
@@ -303,18 +278,14 @@
             );
         }
 
-        // ============================================
-        // DASHBOARD PAGE (Home)
-        // ============================================
-        function DashboardPage() {
-            const navigate = useNavigate();
-
+        // Dashboard Page
+        function DashboardPage({ onNavigate }) {
             const modules = [
                 {
                     title: 'NCM Analytics',
                     description: 'Non-conforming material tracking and analysis',
                     icon: <NCMIcon />,
-                    path: '/ncm',
+                    action: () => onNavigate('ncm'),
                     color: 'from-red-500 to-orange-500',
                     status: 'live',
                     stats: { label: 'Active NCMs', value: '24' }
@@ -323,7 +294,7 @@
                     title: '3D Visualization',
                     description: 'Interactive 3D manufacturing data visualization',
                     icon: <CubeIcon />,
-                    path: '/ncm/3d',
+                    action: () => window.open('/3d.html', '_blank'),
                     color: 'from-blue-500 to-cyan-500',
                     status: 'live',
                     stats: { label: 'Data Points', value: '156' }
@@ -332,7 +303,7 @@
                     title: 'Certificates of Analysis',
                     description: 'Manage and search quality certificates',
                     icon: <CoAIcon />,
-                    path: '/coa',
+                    action: null,
                     color: 'from-green-500 to-emerald-500',
                     status: 'coming soon',
                     stats: { label: 'Documents', value: '-' }
@@ -341,7 +312,7 @@
                     title: 'Silo Resin Levels',
                     description: 'Real-time inventory and usage monitoring',
                     icon: <SiloIcon />,
-                    path: '/silo',
+                    action: null,
                     color: 'from-purple-500 to-pink-500',
                     status: 'coming soon',
                     stats: { label: 'Silos', value: '-' }
@@ -350,7 +321,7 @@
                     title: 'Shipping & Logistics',
                     description: 'Order tracking and delivery schedules',
                     icon: <ShipIcon />,
-                    path: '/shipping',
+                    action: null,
                     color: 'from-yellow-500 to-orange-500',
                     status: 'coming soon',
                     stats: { label: 'Orders', value: '-' }
@@ -359,7 +330,7 @@
                     title: 'Advanced Analytics',
                     description: 'Cross-module insights and predictions',
                     icon: <AnalyticsIcon />,
-                    path: '/analytics',
+                    action: null,
                     color: 'from-indigo-500 to-purple-500',
                     status: 'coming soon',
                     stats: { label: 'Reports', value: '-' }
@@ -376,7 +347,6 @@
             return (
                 <div className="min-h-screen p-6">
                     <div className="max-w-7xl mx-auto space-y-8">
-                        {/* Hero Section */}
                         <div className="text-center space-y-4 py-12">
                             <div className="inline-block float-animation">
                                 <CubeIcon />
@@ -389,7 +359,6 @@
                             </p>
                         </div>
 
-                        {/* Quick Stats */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             {quickStats.map((stat, index) => (
                                 <div key={index} className="glass-card rounded-xl p-6 metric-card">
@@ -401,12 +370,11 @@
                             ))}
                         </div>
 
-                        {/* Modules Grid */}
                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {modules.map((module, index) => (
                                 <div
                                     key={index}
-                                    onClick={() => module.status === 'live' && navigate(module.path)}
+                                    onClick={module.action}
                                     className={`glass-card rounded-xl p-6 ${
                                         module.status === 'live' ? 'cursor-pointer' : 'opacity-60'
                                     }`}
@@ -440,10 +408,9 @@
                             ))}
                         </div>
 
-                        {/* Footer Info */}
                         <div className="glass-card rounded-xl p-6 text-center">
                             <p className="text-slate-400 text-sm">
-                                Built with ❤️ using React, TypeScript, and Cloudflare
+                                Built with ❤️ using React and Cloudflare
                             </p>
                             <p className="text-slate-500 text-xs mt-2">
                                 Version 1.0.0 • © 2025 ISOFlex
@@ -454,19 +421,17 @@
             );
         }
 
-        // ============================================
-        // NCM ANALYTICS PAGE
-        // ============================================
+        // NCM Page
         function NCMPage() {
             return (
                 <div className="min-h-screen p-6">
                     <div className="max-w-7xl mx-auto space-y-6">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between flex-wrap gap-4">
                             <div>
                                 <h1 className="text-3xl font-bold text-white mb-2">NCM Analytics</h1>
                                 <p className="text-slate-400">Non-conforming material tracking and analysis</p>
                             </div>
-                            <div className="flex gap-3">
+                            <div className="flex gap-3 flex-wrap">
                                 <a
                                     href="https://ncm-analytics-db.pages.dev/"
                                     target="_blank"
@@ -476,7 +441,8 @@
                                     📊 Table View
                                 </a>
                                 <a
-                                    href="/3d"
+                                    href="/3d.html"
+                                    target="_blank"
                                     className="glass-card px-6 py-3 rounded-lg text-white hover:bg-slate-700/50 transition-all"
                                 >
                                     🌐 3D View
@@ -488,7 +454,7 @@
                             <div className="glass-card rounded-xl p-6">
                                 <h3 className="text-xl font-bold text-white mb-4">Quick Actions</h3>
                                 <div className="space-y-3">
-                                    <a href="https://ncm-analytics-db.pages.dev/" target="_blank" className="block p-4 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors">
+                                    <a href="https://ncm-analytics-db.pages.dev/" target="_blank" rel="noopener noreferrer" className="block p-4 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors">
                                         <div className="font-semibold text-white">View Current Dashboard</div>
                                         <div className="text-sm text-slate-400">Access the full NCM analytics table</div>
                                     </a>
@@ -535,83 +501,16 @@
             );
         }
 
-        // ============================================
-        // COMING SOON PAGES
-        // ============================================
-        function ComingSoonPage({ title, description, icon }) {
-            return (
-                <div className="min-h-screen flex items-center justify-center p-6">
-                    <div className="glass-card rounded-2xl p-12 text-center max-w-2xl">
-                        <div className="inline-block p-6 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 mb-6 float-animation">
-                            {icon}
-                        </div>
-                        <h1 className="text-4xl font-bold text-white mb-4">{title}</h1>
-                        <p className="text-xl text-slate-400 mb-8">{description}</p>
-                        <div className="inline-block px-6 py-2 rounded-full bg-yellow-500/20 text-yellow-400 text-sm font-semibold">
-                            Coming Soon
-                        </div>
-                        <p className="text-slate-500 text-sm mt-8">
-                            This module is currently under development
-                        </p>
-                    </div>
-                </div>
-            );
-        }
-
-        // ============================================
-        // MAIN APP
-        // ============================================
+        // Main App
         function App() {
+            const [currentPage, setCurrentPage] = useState('dashboard');
+
             return (
-                <BrowserRouter>
-                    <div className="min-h-screen">
-                        <Navigation />
-                        <Routes>
-                            <Route path="/" element={<DashboardPage />} />
-                            <Route path="/ncm" element={<NCMPage />} />
-                            <Route 
-                                path="/coa" 
-                                element={
-                                    <ComingSoonPage 
-                                        title="Certificates of Analysis"
-                                        description="Manage and search quality certificates with advanced OCR and metadata extraction"
-                                        icon={<CoAIcon />}
-                                    />
-                                } 
-                            />
-                            <Route 
-                                path="/silo" 
-                                element={
-                                    <ComingSoonPage 
-                                        title="Silo Resin Levels"
-                                        description="Real-time inventory monitoring with automated alerts and usage predictions"
-                                        icon={<SiloIcon />}
-                                    />
-                                } 
-                            />
-                            <Route 
-                                path="/shipping" 
-                                element={
-                                    <ComingSoonPage 
-                                        title="Shipping & Logistics"
-                                        description="Track orders, manage delivery schedules, and automate customer notifications"
-                                        icon={<ShipIcon />}
-                                    />
-                                } 
-                            />
-                            <Route 
-                                path="/analytics" 
-                                element={
-                                    <ComingSoonPage 
-                                        title="Advanced Analytics"
-                                        description="Cross-module insights, predictive analytics, and custom reporting dashboards"
-                                        icon={<AnalyticsIcon />}
-                                    />
-                                } 
-                            />
-                        </Routes>
-                    </div>
-                </BrowserRouter>
+                <div className="min-h-screen">
+                    <Navigation currentPage={currentPage} onNavigate={setCurrentPage} />
+                    {currentPage === 'dashboard' && <DashboardPage onNavigate={setCurrentPage} />}
+                    {currentPage === 'ncm' && <NCMPage />}
+                </div>
             );
         }
 
