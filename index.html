@@ -7,6 +7,8 @@
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.16/dist/framer-motion.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.4/gsap.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -16,21 +18,38 @@
                         primary: '#3b82f6',
                         secondary: '#8b5cf6',
                         accent: '#06b6d4',
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                        'slide-up': 'slideUp 0.5s ease-out',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        }
                     }
                 }
             }
         }
     </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
         
         body {
             margin: 0;
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
             min-height: 100vh;
+            overflow-x: hidden;
         }
 
+        /* Glass-morphism styles */
         .glass {
             background: rgba(15, 23, 42, 0.7);
             backdrop-filter: blur(16px);
@@ -41,16 +60,30 @@
             background: rgba(30, 41, 59, 0.6);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(148, 163, 184, 0.1);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .glass-card:hover {
-            background: rgba(51, 65, 85, 0.7);
-            border-color: rgba(59, 130, 246, 0.3);
-            transform: translateY(-4px);
-            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.2);
+        /* shadcn/ui inspired button styles */
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
         }
 
+        .btn-primary:hover {
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+        }
+
+        .btn-ghost:hover {
+            background: rgba(51, 65, 85, 0.5);
+            border-color: rgba(59, 130, 246, 0.5);
+        }
+
+        /* Gradient text */
         .gradient-text {
             background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
             -webkit-background-clip: text;
@@ -58,23 +91,7 @@
             background-clip: text;
         }
 
-        .module-icon {
-            transition: transform 0.3s ease;
-        }
-
-        .glass-card:hover .module-icon {
-            transform: scale(1.1) rotate(5deg);
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
-        }
-
-        .float-animation {
-            animation: float 6s ease-in-out infinite;
-        }
-
+        /* Status indicator with pulse */
         .status-indicator {
             position: relative;
             display: inline-block;
@@ -105,6 +122,7 @@
             }
         }
 
+        /* Nav link with underline effect */
         .nav-link {
             position: relative;
             overflow: hidden;
@@ -127,34 +145,48 @@
             transform: translateX(0);
         }
 
-        .metric-card {
+        /* Shine effect on cards */
+        .shine-effect {
             position: relative;
             overflow: hidden;
         }
 
-        .metric-card::before {
+        .shine-effect::before {
             content: '';
             position: absolute;
             top: 0;
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
             transition: left 0.5s ease;
         }
 
-        .metric-card:hover::before {
+        .shine-effect:hover::before {
             left: 100%;
+        }
+
+        /* Scroll indicator */
+        .scroll-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #3b82f6, #06b6d4);
+            z-index: 9999;
+            transform-origin: left;
         }
     </style>
 </head>
 <body>
+    <div id="scroll-indicator" class="scroll-indicator"></div>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useRef } = React;
+        const { motion, AnimatePresence } = window.MotionDOM || window.Motion;
 
-        // Icons
+        // Icons (same as before)
         const DashboardIcon = () => (
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 13a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1v-7z" />
@@ -197,7 +229,59 @@
             </svg>
         );
 
-        // Navigation Component
+        // Scroll Indicator
+        function ScrollIndicator() {
+            useEffect(() => {
+                const indicator = document.getElementById('scroll-indicator');
+                
+                const updateScroll = () => {
+                    const scrollPercentage = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+                    indicator.style.width = `${scrollPercentage}%`;
+                };
+
+                window.addEventListener('scroll', updateScroll);
+                return () => window.removeEventListener('scroll', updateScroll);
+            }, []);
+
+            return null;
+        }
+
+        // shadcn/ui-style Button Component
+        function Button({ children, variant = 'primary', className = '', onClick, ...props }) {
+            const baseClasses = "px-6 py-3 rounded-lg font-medium transition-all duration-300 cursor-pointer";
+            const variantClasses = {
+                primary: "btn-primary text-white",
+                ghost: "btn-ghost text-slate-300",
+                outline: "border border-blue-500 text-blue-400 hover:bg-blue-500/10"
+            };
+
+            return (
+                <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={onClick}
+                    className={`${baseClasses} ${variantClasses[variant]} ${className}`}
+                    {...props}
+                >
+                    {children}
+                </motion.button>
+            );
+        }
+
+        // shadcn/ui-style Card Component
+        function Card({ children, className = '', ...props }) {
+            return (
+                <motion.div
+                    whileHover={{ y: -4 }}
+                    className={`glass-card rounded-xl p-6 shine-effect ${className}`}
+                    {...props}
+                >
+                    {children}
+                </motion.div>
+            );
+        }
+
+        // Navigation Component with Framer Motion
         function Navigation({ currentPage, onNavigate }) {
             const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -207,22 +291,30 @@
             ];
 
             return (
-                <nav className="glass sticky top-0 z-50 border-b border-slate-700/50">
+                <motion.nav 
+                    initial={{ y: -100 }}
+                    animate={{ y: 0 }}
+                    transition={{ type: "spring", stiffness: 100 }}
+                    className="glass sticky top-0 z-50 border-b border-slate-700/50"
+                >
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex items-center justify-between h-16">
-                            <div 
+                            <motion.div 
+                                whileHover={{ scale: 1.05 }}
                                 onClick={() => onNavigate('dashboard')}
                                 className="flex items-center space-x-3 cursor-pointer"
                             >
                                 <CubeIcon />
                                 <span className="text-2xl font-bold gradient-text">ISOFlex</span>
                                 <div className="status-indicator"></div>
-                            </div>
+                            </motion.div>
 
                             <div className="hidden md:flex items-center space-x-1">
                                 {navItems.map((item) => (
-                                    <button
+                                    <motion.button
                                         key={item.id}
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
                                         onClick={() => onNavigate(item.id)}
                                         className={`nav-link px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                                             currentPage === item.id
@@ -234,7 +326,7 @@
                                             {item.icon}
                                             <span>{item.label}</span>
                                         </div>
-                                    </button>
+                                    </motion.button>
                                 ))}
                             </div>
 
@@ -249,37 +341,79 @@
                         </div>
                     </div>
 
-                    {mobileMenuOpen && (
-                        <div className="md:hidden border-t border-slate-700/50">
-                            <div className="px-2 pt-2 pb-3 space-y-1">
-                                {navItems.map((item) => (
-                                    <button
-                                        key={item.id}
-                                        onClick={() => {
-                                            onNavigate(item.id);
-                                            setMobileMenuOpen(false);
-                                        }}
-                                        className={`w-full text-left px-3 py-2 rounded-lg text-base font-medium ${
-                                            currentPage === item.id
-                                                ? 'text-blue-400 bg-blue-500/10'
-                                                : 'text-slate-300 hover:bg-slate-700/50'
-                                        }`}
-                                    >
-                                        <div className="flex items-center space-x-2">
-                                            {item.icon}
-                                            <span>{item.label}</span>
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </nav>
+                    <AnimatePresence>
+                        {mobileMenuOpen && (
+                            <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className="md:hidden border-t border-slate-700/50 overflow-hidden"
+                            >
+                                <div className="px-2 pt-2 pb-3 space-y-1">
+                                    {navItems.map((item) => (
+                                        <button
+                                            key={item.id}
+                                            onClick={() => {
+                                                onNavigate(item.id);
+                                                setMobileMenuOpen(false);
+                                            }}
+                                            className={`w-full text-left px-3 py-2 rounded-lg text-base font-medium ${
+                                                currentPage === item.id
+                                                    ? 'text-blue-400 bg-blue-500/10'
+                                                    : 'text-slate-300 hover:bg-slate-700/50'
+                                            }`}
+                                        >
+                                            <div className="flex items-center space-x-2">
+                                                {item.icon}
+                                                <span>{item.label}</span>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </motion.nav>
             );
         }
 
-        // Dashboard Page
+        // Dashboard Page with GSAP animations
         function DashboardPage({ onNavigate }) {
+            const heroRef = useRef(null);
+            const titleRef = useRef(null);
+
+            useEffect(() => {
+                // GSAP hero text animation
+                if (titleRef.current) {
+                    gsap.from(titleRef.current, {
+                        duration: 1,
+                        y: 50,
+                        opacity: 0,
+                        ease: 'power3.out'
+                    });
+
+                    // Animate gradient on title
+                    gsap.to(titleRef.current, {
+                        duration: 3,
+                        backgroundPosition: '200% center',
+                        ease: 'none',
+                        repeat: -1
+                    });
+                }
+
+                // Floating animation for cube icon
+                const cubeIcon = document.querySelector('.cube-float');
+                if (cubeIcon) {
+                    gsap.to(cubeIcon, {
+                        y: -20,
+                        duration: 2,
+                        ease: 'power1.inOut',
+                        repeat: -1,
+                        yoyo: true
+                    });
+                }
+            }, []);
+
             const modules = [
                 {
                     title: 'NCM Analytics',
@@ -345,44 +479,91 @@
             ];
 
             return (
-                <div className="min-h-screen p-6">
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="min-h-screen p-6"
+                >
                     <div className="max-w-7xl mx-auto space-y-8">
-                        <div className="text-center space-y-4 py-12">
-                            <div className="inline-block float-animation">
+                        {/* Hero Section */}
+                        <div ref={heroRef} className="text-center space-y-4 py-12">
+                            <motion.div 
+                                className="inline-block cube-float"
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
+                            >
                                 <CubeIcon />
-                            </div>
-                            <h1 className="text-5xl md:text-6xl font-bold gradient-text">
+                            </motion.div>
+                            <h1 
+                                ref={titleRef}
+                                className="text-5xl md:text-6xl font-bold gradient-text"
+                                style={{ backgroundSize: '200% auto' }}
+                            >
                                 ISOFlex Manufacturing Hub
                             </h1>
-                            <p className="text-xl text-slate-400 max-w-2xl mx-auto">
+                            <motion.p 
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.4 }}
+                                className="text-xl text-slate-400 max-w-2xl mx-auto"
+                            >
                                 Your central operations platform for real-time manufacturing intelligence
-                            </p>
+                            </motion.p>
                         </div>
 
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {/* Quick Stats */}
+                        <motion.div 
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.6 }}
+                            className="grid grid-cols-2 md:grid-cols-4 gap-4"
+                        >
                             {quickStats.map((stat, index) => (
-                                <div key={index} className="glass-card rounded-xl p-6 metric-card">
-                                    <div className="text-sm text-slate-400 mb-1">{stat.label}</div>
-                                    <div className={`text-2xl md:text-3xl font-bold ${stat.color}`}>
-                                        {stat.value}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {modules.map((module, index) => (
-                                <div
+                                <motion.div
                                     key={index}
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: 0.7 + index * 0.1 }}
+                                >
+                                    <Card className="shine-effect">
+                                        <div className="text-sm text-slate-400 mb-1">{stat.label}</div>
+                                        <div className={`text-2xl md:text-3xl font-bold ${stat.color}`}>
+                                            {stat.value}
+                                        </div>
+                                    </Card>
+                                </motion.div>
+                            ))}
+                        </motion.div>
+
+                        {/* Modules Grid */}
+                        <motion.div 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.8 }}
+                            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+                        >
+                            {modules.map((module, index) => (
+                                <motion.div
+                                    key={index}
+                                    initial={{ opacity: 0, y: 30 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.9 + index * 0.1 }}
+                                    whileHover={{ scale: 1.02 }}
                                     onClick={module.action}
-                                    className={`glass-card rounded-xl p-6 ${
+                                    className={`glass-card rounded-xl p-6 shine-effect ${
                                         module.status === 'live' ? 'cursor-pointer' : 'opacity-60'
                                     }`}
                                 >
                                     <div className="flex items-start justify-between mb-4">
-                                        <div className={`p-3 rounded-lg bg-gradient-to-br ${module.color} module-icon`}>
+                                        <motion.div 
+                                            whileHover={{ rotate: 360 }}
+                                            transition={{ duration: 0.5 }}
+                                            className={`p-3 rounded-lg bg-gradient-to-br ${module.color}`}
+                                        >
                                             {module.icon}
-                                        </div>
+                                        </motion.div>
                                         <span className={`text-xs px-3 py-1 rounded-full ${
                                             module.status === 'live'
                                                 ? 'bg-green-500/20 text-green-400'
@@ -404,112 +585,155 @@
                                             </svg>
                                         )}
                                     </div>
-                                </div>
+                                </motion.div>
                             ))}
-                        </div>
+                        </motion.div>
 
-                        <div className="glass-card rounded-xl p-6 text-center">
-                            <p className="text-slate-400 text-sm">
-                                Built with ❤️ using React and Cloudflare
-                            </p>
-                            <p className="text-slate-500 text-xs mt-2">
-                                Version 1.0.0 • © 2025 ISOFlex
-                            </p>
-                        </div>
+                        {/* Footer */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 1.5 }}
+                        >
+                            <Card className="text-center">
+                                <p className="text-slate-400 text-sm">
+                                    Built with ❤️ using React, Framer Motion, GSAP, and Cloudflare
+                                </p>
+                                <p className="text-slate-500 text-xs mt-2">
+                                    Version 1.0.0 • © 2025 ISOFlex
+                                </p>
+                            </Card>
+                        </motion.div>
                     </div>
-                </div>
+                </motion.div>
             );
         }
 
         // NCM Page
         function NCMPage() {
             return (
-                <div className="min-h-screen p-6">
+                <motion.div
+                    initial={{ opacity: 0, x: 100 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -100 }}
+                    transition={{ type: "spring", stiffness: 100 }}
+                    className="min-h-screen p-6"
+                >
                     <div className="max-w-7xl mx-auto space-y-6">
-                        <div className="flex items-center justify-between flex-wrap gap-4">
+                        <motion.div 
+                            initial={{ opacity: 0, y: -20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="flex items-center justify-between flex-wrap gap-4"
+                        >
                             <div>
                                 <h1 className="text-3xl font-bold text-white mb-2">NCM Analytics</h1>
                                 <p className="text-slate-400">Non-conforming material tracking and analysis</p>
                             </div>
                             <div className="flex gap-3 flex-wrap">
-                                <a
-                                    href="https://ncm-analytics-db.pages.dev/"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="glass-card px-6 py-3 rounded-lg text-white hover:bg-slate-700/50 transition-all"
+                                <Button 
+                                    variant="primary"
+                                    onClick={() => window.open('https://ncm-analytics-db.pages.dev/', '_blank')}
                                 >
                                     📊 Table View
-                                </a>
-                                <a
-                                    href="/3d.html"
-                                    target="_blank"
-                                    className="glass-card px-6 py-3 rounded-lg text-white hover:bg-slate-700/50 transition-all"
+                                </Button>
+                                <Button 
+                                    variant="outline"
+                                    onClick={() => window.open('/3d.html', '_blank')}
                                 >
                                     🌐 3D View
-                                </a>
+                                </Button>
                             </div>
-                        </div>
+                        </motion.div>
 
                         <div className="grid md:grid-cols-2 gap-6">
-                            <div className="glass-card rounded-xl p-6">
-                                <h3 className="text-xl font-bold text-white mb-4">Quick Actions</h3>
-                                <div className="space-y-3">
-                                    <a href="https://ncm-analytics-db.pages.dev/" target="_blank" rel="noopener noreferrer" className="block p-4 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors">
-                                        <div className="font-semibold text-white">View Current Dashboard</div>
-                                        <div className="text-sm text-slate-400">Access the full NCM analytics table</div>
-                                    </a>
-                                    <button className="w-full text-left p-4 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors">
-                                        <div className="font-semibold text-white">Export Data</div>
-                                        <div className="text-sm text-slate-400">Download NCM reports as CSV/Excel</div>
-                                    </button>
-                                    <button className="w-full text-left p-4 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors">
-                                        <div className="font-semibold text-white">Generate Report</div>
-                                        <div className="text-sm text-slate-400">Create custom analytics report</div>
-                                    </button>
-                                </div>
-                            </div>
+                            <motion.div
+                                initial={{ opacity: 0, x: -50 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: 0.2 }}
+                            >
+                                <Card>
+                                    <h3 className="text-xl font-bold text-white mb-4">Quick Actions</h3>
+                                    <div className="space-y-3">
+                                        <motion.a 
+                                            whileHover={{ x: 5 }}
+                                            href="https://ncm-analytics-db.pages.dev/" 
+                                            target="_blank" 
+                                            rel="noopener noreferrer" 
+                                            className="block p-4 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors"
+                                        >
+                                            <div className="font-semibold text-white">View Current Dashboard</div>
+                                            <div className="text-sm text-slate-400">Access the full NCM analytics table</div>
+                                        </motion.a>
+                                        <motion.button 
+                                            whileHover={{ x: 5 }}
+                                            className="w-full text-left p-4 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors"
+                                        >
+                                            <div className="font-semibold text-white">Export Data</div>
+                                            <div className="text-sm text-slate-400">Download NCM reports as CSV/Excel</div>
+                                        </motion.button>
+                                        <motion.button 
+                                            whileHover={{ x: 5 }}
+                                            className="w-full text-left p-4 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors"
+                                        >
+                                            <div className="font-semibold text-white">Generate Report</div>
+                                            <div className="text-sm text-slate-400">Create custom analytics report</div>
+                                        </motion.button>
+                                    </div>
+                                </Card>
+                            </motion.div>
 
-                            <div className="glass-card rounded-xl p-6">
-                                <h3 className="text-xl font-bold text-white mb-4">Recent Activity</h3>
-                                <div className="space-y-3">
-                                    <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-700/20">
-                                        <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                                        <div className="flex-1">
-                                            <div className="text-sm text-white">New critical NCM</div>
-                                            <div className="text-xs text-slate-400">Line A • 5 mins ago</div>
-                                        </div>
+                            <motion.div
+                                initial={{ opacity: 0, x: 50 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: 0.4 }}
+                            >
+                                <Card>
+                                    <h3 className="text-xl font-bold text-white mb-4">Recent Activity</h3>
+                                    <div className="space-y-3">
+                                        {[
+                                            { color: 'bg-red-500', text: 'New critical NCM', detail: 'Line A • 5 mins ago' },
+                                            { color: 'bg-green-500', text: 'NCM #101724A resolved', detail: 'Line B • 15 mins ago' },
+                                            { color: 'bg-yellow-500', text: 'Quality review pending', detail: 'Line C • 1 hour ago' },
+                                        ].map((activity, index) => (
+                                            <motion.div
+                                                key={index}
+                                                initial={{ opacity: 0, x: 20 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                transition={{ delay: 0.6 + index * 0.1 }}
+                                                className="flex items-center gap-3 p-3 rounded-lg bg-slate-700/20"
+                                            >
+                                                <div className={`w-2 h-2 rounded-full ${activity.color}`}></div>
+                                                <div className="flex-1">
+                                                    <div className="text-sm text-white">{activity.text}</div>
+                                                    <div className="text-xs text-slate-400">{activity.detail}</div>
+                                                </div>
+                                            </motion.div>
+                                        ))}
                                     </div>
-                                    <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-700/20">
-                                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                                        <div className="flex-1">
-                                            <div className="text-sm text-white">NCM #101724A resolved</div>
-                                            <div className="text-xs text-slate-400">Line B • 15 mins ago</div>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-700/20">
-                                        <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                                        <div className="flex-1">
-                                            <div className="text-sm text-white">Quality review pending</div>
-                                            <div className="text-xs text-slate-400">Line C • 1 hour ago</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                                </Card>
+                            </motion.div>
                         </div>
                     </div>
-                </div>
+                </motion.div>
             );
         }
 
-        // Main App
+        // Main App with AnimatePresence for page transitions
         function App() {
             const [currentPage, setCurrentPage] = useState('dashboard');
 
             return (
                 <div className="min-h-screen">
+                    <ScrollIndicator />
                     <Navigation currentPage={currentPage} onNavigate={setCurrentPage} />
-                    {currentPage === 'dashboard' && <DashboardPage onNavigate={setCurrentPage} />}
-                    {currentPage === 'ncm' && <NCMPage />}
+                    <AnimatePresence mode="wait">
+                        {currentPage === 'dashboard' && (
+                            <DashboardPage key="dashboard" onNavigate={setCurrentPage} />
+                        )}
+                        {currentPage === 'ncm' && (
+                            <NCMPage key="ncm" />
+                        )}
+                    </AnimatePresence>
                 </div>
             );
         }
