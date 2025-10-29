@@ -548,7 +548,7 @@
                 const fetchData = async () => {
                     try {
                         setLoading(true);
-                        const response = await fetch('https://ncm-analytics-db.pages.dev/data');
+                        const response = await fetch('https://ncm-analytics-db.pages.dev/api/ncm/data');
                         if (!response.ok) throw new Error('Failed to fetch NCM data');
                         
                         const ncmData = await response.json();
